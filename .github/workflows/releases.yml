@@ -26,16 +26,67 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
+      has_main_py: ${{ steps.check_files.outputs.has_main_py }}
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Check if main.py exists or was modified
+      id: check_files
+      run: |
+        HAS_MAIN_PY="false"
+        
+        # For workflow_dispatch or release events, always allow
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ] || [ "${{ github.event_name }}" == "release" ]; then
+          echo "Manual trigger or release event - skipping file check"
+          HAS_MAIN_PY="true"
+        # For workflow_run triggered by push
+        elif [ "${{ github.event_name }}" == "workflow_run" ]; then
+          # Check if main.py exists in the repository
+          if [ -f "main.py" ]; then
+            echo "✓ main.py exists in repository"
+            
+            # Check if main.py was modified in recent commits
+            if git diff --name-only HEAD~1 HEAD | grep -q "main.py"; then
+              echo "✓ main.py was modified in this push"
+              HAS_MAIN_PY="true"
+            else
+              echo "⚠ main.py exists but was not modified in this push"
+              echo "ℹ Skipping release - only releases when main.py is modified"
+              HAS_MAIN_PY="false"
+            fi
+          else
+            echo "✗ main.py not found in repository - skipping release"
+            HAS_MAIN_PY="false"
+          fi
+        else
+          # For other events, check if main.py exists
+          if [ -f "main.py" ]; then
+            HAS_MAIN_PY="true"
+          fi
+        fi
+        
+        echo "has_main_py=$HAS_MAIN_PY" >> $GITHUB_OUTPUT
+        echo "Main.py check result: $HAS_MAIN_PY"
+
     - name: Check CI status
       id: check
       run: |
         echo "CI workflow completed successfully or manual trigger"
-        echo "should_release=true" >> $GITHUB_OUTPUT
+        
+        if [ "${{ steps.check_files.outputs.has_main_py }}" == "true" ]; then
+          echo "should_release=true" >> $GITHUB_OUTPUT
+          echo "✓ Release will proceed (main.py requirement satisfied)"
+        else
+          echo "should_release=false" >> $GITHUB_OUTPUT
+          echo "✗ Release skipped (main.py not found or not modified)"
+        fi
 
   build-package:
     needs: check-ci-status
-    if: needs.check-ci-status.outputs.should_release == 'true'
+    if: needs.check-ci-status.outputs.should_release == 'true' && needs.check-ci-status.outputs.has_main_py == 'true'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
@@ -299,3 +350,8 @@ jobs:
         echo "  GitHub Packages: ${{ needs.publish-to-github-packages.result }}"
         echo ""
         echo "════════════════════════════════════════════════════"
+        echo ""
+        echo "ℹ️  Note: This workflow only triggers when:"
+        echo "   - main.py is modified in the push (for automatic releases)"
+        echo "   - A GitHub release is created"
+        echo "   - Workflow is manually triggered"

@@ -1,0 +1,44 @@
+# Coverage.py configuration
+# Run tests with coverage: pytest --cov=avmoperation --cov-report=html
+# Generate report: coverage report
+# Generate HTML report: coverage html
+#
+# NOTE: This configuration is provided for standardization but not required.
+
+[run]
+branch = True
+source = 
+    avmoperation
+    main.py
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */site-packages/*
+    */venv/*
+    */virtualenv/*
+    .venv/*
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstract
+    
+[html]
+directory = htmlcov

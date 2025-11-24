@@ -713,4 +713,3 @@ MIT License
 - [Azure Compute Management 库](https://learn.microsoft.com/zh-cn/python/api/overview/azure/mgmt-compute-readme)
 - [Azure 虚拟机文档](https://docs.microsoft.com/zh-cn/azure/virtual-machines/)
 - [Service Principal 文档](https://docs.microsoft.com/zh-cn/azure/active-directory/develop/app-objects-and-service-principals)
-- [飞书开放平台](https://open.feishu.cn/)

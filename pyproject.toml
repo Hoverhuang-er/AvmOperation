@@ -1,8 +1,271 @@
 [project]
 name = "avmoperation"
-version = "0.1.0"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- Check README.md for usage documentation- See CONTRIBUTING.md for contribution guidelines- Open an issue for bugs or questions## Questions?   - GitHub Packages support   - GitHub Releases with artifacts   - PyPI publication   - Automatic builds when main.py changes2. **Releases** (releases.yml):   - Import verification and function signature checks   - Single-threaded and free-threaded versions   - Python 3.11, 3.12, 3.13, 3.14-dev1. **Testing** (test.yml):The project uses GitHub Actions for:## CI/CD```pip install -e .cd AvmOperationgit clone https://github.com/Hoverhuang-er/AvmOperation.git# From sourcepip install git+https://github.com/Hoverhuang-er/AvmOperation.git# From GitHubpip install avmoperation# From PyPI```bashThe project supports multiple installation methods:## Package Distribution5. **Flexibility**: Use what you need, ignore the rest4. **Documentation**: Self-documenting configuration3. **Compatibility**: Works with pip, uv, poetry, etc.2. **Tool Support**: Better IDE and tool integration1. **Standardization**: Industry-standard project layoutFollowing boto3's structure provides:### Why These Files?   - Makefile just provides shortcuts   - All commands can be run directly4. **Makefile**: Convenience only   - Use if you want stronger type safety   - Mypy configuration is provided but not enforced3. **Type checking**: Optional   - Not required for basic development   - Run when needed: `pytest --cov`2. **Coverage reports**: Generated on demand   - Skip if you prefer manual checks   - Enable with: `pre-commit install`1. **Pre-commit hooks**: Not enabled by defaultAll configuration files are provided for standardization but are **optional**:### Lightweight by Design## Configuration Notes```make clean# Clean build artifactsmake all# Run all checks and buildmake build# Build packagemake test-covmake test# Run testsmake lintmake format# Format and lint codemake install-dev# Install package in development modemake help# Show all available commands```bashThe Makefile provides convenient shortcuts:## Using Make Commands```twine check dist/*# Check packagepython -m build# Build wheel and source distribution```bash### 4. Building```mypy .# Run mypy```bash### 3. Type Checking (Optional)```xdg-open htmlcov/index.html  # Linuxopen htmlcov/index.html  # macOS# View coverage reportpytest --cov=avmoperation --cov-report=html# Run with coveragepytest# Run all tests```bash### 2. Testing```ruff check --fix .# Auto-fix issuesruff check .# Lint coderuff format .# Format code```bash### 1. Code Quality## Development Workflow```pre-commit run --all-files# Run manually on all filespre-commit install# Install pre-commit hooks```bash### Optional: Enable Pre-commit Hooks```uv pip install -e ".[dev]"# Or using uvpip install -e ".[dev]"# Install in development modecd AvmOperationgit clone https://github.com/Hoverhuang-er/AvmOperation.git# Clone the repository```bash### Quick Setup## Getting Started  - Run `make help` for available commands  - Quick shortcuts for common commands- **Makefile**: Common development tasks  - Supported by most modern editors  - Ensures consistent coding style across editors- **.editorconfig**: Editor consistency  - Run with: `pytest --cov`  - Used by pytest-cov- **.coveragerc**: Test coverage configuration  - Run manually: `pre-commit run --all-files`  - Install with: `pre-commit install`  - Automated code quality checks before commits- **.pre-commit-config.yaml**: Pre-commit hooks### Development Tools (Optional)  - Package options  - Wheel build settings- **setup.cfg**: Additional setup configuration (legacy compatibility)  - Reads metadata from pyproject.toml  - Provides compatibility with older tools- **setup.py**: Installation script (legacy compatibility)  - Tool configurations (ruff, pytest, mypy, etc.)  - Build system configuration  - Dependencies  - Package metadata- **pyproject.toml**: Main project configuration (PEP 518)### Essential Files## Configuration Files Overview```└── uv.lock                # UV lock file├── setup.py               # Setup script (legacy support)├── setup.cfg              # Setup configuration (legacy support)├── README.md              # Project documentation├── pyproject.toml         # Main project configuration├── MANIFEST.in            # Package manifest├── Makefile               # Development commands├── LICENSE                # License file├── CONTRIBUTING.md        # Contribution guidelines├── .pre-commit-config.yaml # Pre-commit hooks config├── .gitignore             # Git ignore rules├── .editorconfig          # Editor configuration├── .coveragerc            # Coverage configuration├── main.py                # CLI entry point├── example.py             # Usage examples├── docs/                  # Documentation (optional)│   └── __init__.py├── tests/                 # Test directory (to be created)│   └── main.py│   ├── __init__.py├── avmoperation/          # Main package directory (to be created)│   └── dependabot.yml     # Dependency updates config│   │   └── releases.yml   # Release workflow│   │   ├── test.yml       # Testing workflow│   ├── workflows/          # CI/CD workflows├── .github/AvmOperation/```## Project StructureThis document provides guidance for developers working on the AvmOperation project.version = "0.1.0"
 description = "Azure VM operations with webhook notifications"
+readme = "README.md"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Hoverhuang", email = "hoverhuang@example.com"},
+]
+keywords = ["azure", "vm", "operations", "automation", "webhook"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+]
 dependencies = [
     "requests>=2.31.0",
     "azure-identity>=1.15.0",
@@ -12,7 +275,168 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
 ]
 
 [project.scripts]
 avmop = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/Hoverhuang-er/AvmOperation"
+Documentation = "https://github.com/Hoverhuang-er/AvmOperation#readme"
+Repository = "https://github.com/Hoverhuang-er/AvmOperation"
+Issues = "https://github.com/Hoverhuang-er/AvmOperation/issues"
+Changelog = "https://github.com/Hoverhuang-er/AvmOperation/releases"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["avmoperation"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+avmoperation = ["py.typed"]
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+indent-width = 4
+
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pycache__",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = []
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.isort]
+known-first-party = ["avmoperation"]
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+branch = true
+source = ["avmoperation", "main.py"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstract",
+]
+
+# Black configuration (if you want to use Black instead of Ruff format)
+[tool.black]
+line-length = 88
+target-version = ["py311", "py312", "py313"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_optional = false
+
+[[tool.mypy.overrides]]
+module = [
+    "azure.*",
+    "requests.*",
+]
+ignore_missing_imports = true
+

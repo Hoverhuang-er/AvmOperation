@@ -1,0 +1,32 @@
+# MANIFEST.in - Specifies additional files to include in source distributions
+# This file is used by setuptools when building sdist packages
+
+include README.md
+include LICENSE
+include pyproject.toml
+include setup.py
+include setup.cfg
+
+# Include configuration files
+include .coveragerc
+include .editorconfig
+include .pre-commit-config.yaml
+
+# Exclude unnecessary files
+exclude .gitignore
+exclude .gitattributes
+
+# Exclude build and test artifacts
+prune .github
+prune docs/_build
+prune htmlcov
+prune dist
+prune build
+prune *.egg-info
+
+# Exclude caches
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude *~
