@@ -1,0 +1,18 @@
+[project]
+name = "avmoperation"
+version = "0.1.0"
+description = "Azure VM operations with webhook notifications"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31.0",
+    "azure-identity>=1.15.0",
+    "azure-mgmt-compute>=30.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+avmop = "main:main"
