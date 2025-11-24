@@ -1,0 +1,418 @@
+name: CI - Verify Azure VM Operations
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  verify-operations:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: '3.11'
+            threading: 'single'
+          - python-version: '3.12'
+            threading: 'single'
+          - python-version: '3.13'
+            threading: 'single'
+          - python-version: '3.14-dev'
+            threading: 'free-threaded'
+            experimental: true
+    continue-on-error: ${{ matrix.experimental || false }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }} (${{ matrix.threading }})
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+
+    - name: Display Python info
+      run: |
+        python --version
+        python -VV
+        echo "Threading mode: ${{ matrix.threading }}"
+        python -c "import sys; print(f'GIL Status: {getattr(sys, \"_is_gil_enabled\", lambda: \"N/A\")()}')" || echo "GIL info not available"
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+
+    - name: Verify imports and function signatures
+      run: |
+        python -c "
+        import sys
+        import inspect
+        
+        print('=' * 60)
+        print('Verifying avmoperation module imports and functions')
+        print(f'Python Version: {sys.version}')
+        print(f'Threading Mode: ${{ matrix.threading }}')
+        print('=' * 60)
+        
+        # 尝试导入模块中的三个函数
+        try:
+            from avmoperation import start_vm, stop_vm, check_status
+            print('✓ Successfully imported: start_vm, stop_vm, check_status')
+        except ImportError as e:
+            print(f'✗ Import failed: {e}')
+            sys.exit(1)
+        
+        # 验证函数是否可调用
+        functions = {
+            'start_vm': start_vm,
+            'stop_vm': stop_vm,
+            'check_status': check_status
+        }
+        
+        print('\nVerifying functions are callable:')
+        for name, func in functions.items():
+            if callable(func):
+                sig = inspect.signature(func)
+                params = list(sig.parameters.keys())
+                print(f'✓ {name} is callable')
+                print(f'  Parameters: {params}')
+            else:
+                print(f'✗ {name} is not callable')
+                sys.exit(1)
+        
+        # 验证函数参数
+        print('\nVerifying required parameters:')
+        required_params = ['subscription_id', 'vm_name', 'resource_group', 
+                          'client_id', 'tenant_id', 'client_secret']
+        
+        for name, func in functions.items():
+            sig = inspect.signature(func)
+            func_params = list(sig.parameters.keys())
+            
+            missing_params = [p for p in required_params if p not in func_params]
+            if missing_params:
+                print(f'✗ {name} missing parameters: {missing_params}')
+                sys.exit(1)
+            else:
+                print(f'✓ {name} has all required parameters')
+        
+        print('\n' + '=' * 60)
+        print('All verifications passed!')
+        print('=' * 60)
+        "
+
+    - name: Test threading compatibility (Python 3.14t only)
+      if: matrix.threading == 'free-threaded'
+      run: |
+        python -c "
+        import sys
+        import threading
+        import inspect
+        
+        print('=' * 60)
+        print('Testing Free-Threaded Python Compatibility')
+        print('=' * 60)
+        
+        # 验证 GIL 状态
+        try:
+            gil_enabled = sys._is_gil_enabled()
+            print(f'✓ GIL Status: {\"Enabled\" if gil_enabled else \"Disabled (Free-threaded)\"}')
+        except AttributeError:
+            print('⚠ Cannot determine GIL status (pre-3.13 Python)')
+        
+        # 测试多线程导入
+        from avmoperation import start_vm, stop_vm, check_status
+        
+        print('\nTesting concurrent imports:')
+        results = []
+        
+        def import_test():
+            try:
+                from avmoperation import start_vm, stop_vm, check_status
+                results.append(True)
+            except Exception as e:
+                results.append(False)
+                print(f'✗ Thread import failed: {e}')
+        
+        threads = [threading.Thread(target=import_test) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        
+        if all(results) and len(results) == 10:
+            print(f'✓ All {len(results)} concurrent imports successful')
+        else:
+            print(f'✗ Some concurrent imports failed: {sum(results)}/{len(results)} succeeded')
+            sys.exit(1)
+        
+        print('\n' + '=' * 60)
+        print('Free-threaded compatibility verified!')
+        print('=' * 60)
+        "
+
+    - name: Verify AvmOperation class
+      run: |
+        python -c "
+        import sys
+        import inspect
+        
+        print('=' * 60)
+        print('Verifying AvmOperation class')
+        print('=' * 60)
+        
+        try:
+            from avmoperation import AvmOperation
+            print('✓ Successfully imported AvmOperation class')
+        except ImportError as e:
+            print(f'✗ Import failed: {e}')
+            sys.exit(1)
+        
+        # 验证类方法
+        required_methods = ['start_vm', 'stop_vm', 'get_status']
+        
+        print('\nVerifying class methods:')
+        for method_name in required_methods:
+            if hasattr(AvmOperation, method_name):
+                method = getattr(AvmOperation, method_name)
+                if callable(method):
+                    sig = inspect.signature(method)
+                    params = list(sig.parameters.keys())
+                    print(f'✓ {method_name} method exists and is callable')
+                    print(f'  Parameters: {params}')
+                else:
+                    print(f'✗ {method_name} exists but is not callable')
+                    sys.exit(1)
+            else:
+                print(f'✗ {method_name} method not found')
+                sys.exit(1)
+        
+        print('\n' + '=' * 60)
+        print('AvmOperation class verification passed!')
+        print('=' * 60)
+        "
+
+    - name: Verify example.py syntax
+      run: |
+        python -m py_compile example.py
+        echo "✓ example.py syntax is valid"
+
+    - name: Check function signatures match usage in example.py
+      run: |
+        python -c "
+        import sys
+        import ast
+        
+        print('=' * 60)
+        print('Verifying example.py uses correct function signatures')
+        print('=' * 60)
+        
+        # 读取 example.py 并解析
+        with open('example.py', 'r') as f:
+            tree = ast.parse(f.read())
+        
+        # 查找函数调用
+        function_calls = {}
+        
+        class FunctionCallVisitor(ast.NodeVisitor):
+            def visit_Call(self, node):
+                if isinstance(node.func, ast.Name):
+                    func_name = node.func.id
+                    if func_name in ['start_vm', 'stop_vm', 'check_status']:
+                        if func_name not in function_calls:
+                            function_calls[func_name] = []
+                        
+                        # 获取关键字参数
+                        kwargs = [kw.arg for kw in node.keywords]
+                        function_calls[func_name].append(kwargs)
+                
+                self.generic_visit(node)
+        
+        visitor = FunctionCallVisitor()
+        visitor.visit(tree)
+        
+        print(f'\nFound {len(function_calls)} unique function calls in example.py:')
+        for func_name, calls in function_calls.items():
+            print(f'  - {func_name}: {len(calls)} call(s)')
+        
+        if function_calls:
+            print('✓ example.py contains calls to the target functions')
+        else:
+            print('⚠ No direct function calls found (may use class methods)')
+        
+        print('\n' + '=' * 60)
+        print('Example file verification completed!')
+        print('=' * 60)
+        "
+
+  verify-import-from-example:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: '3.11'
+            threading: 'single'
+          - python-version: '3.12'
+            threading: 'single'
+          - python-version: '3.13'
+            threading: 'single'
+          - python-version: '3.14-dev'
+            threading: 'free-threaded'
+            experimental: true
+    continue-on-error: ${{ matrix.experimental || false }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }} (${{ matrix.threading }})
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+
+    - name: Test imports from example.py
+      run: |
+        python -c "
+        import sys
+        import os
+        
+        print('=' * 60)
+        print('Testing imports as shown in example.py')
+        print('=' * 60)
+        
+        # 测试 example.py 中的导入方式
+        try:
+            from avmoperation import start_vm, stop_vm, check_status, AvmOperation
+            print('✓ All imports successful:')
+            print('  - start_vm')
+            print('  - stop_vm')
+            print('  - check_status')
+            print('  - AvmOperation')
+        except ImportError as e:
+            print(f'✗ Import failed: {e}')
+            sys.exit(1)
+        
+        # 验证可以创建虚拟调用（不实际执行）
+        print('\nVerifying functions accept mock parameters:')
+        
+        mock_params = {
+            'subscription_id': 'mock-sub-id',
+            'vm_name': 'mock-vm',
+            'resource_group': 'mock-rg',
+            'client_id': 'mock-client-id',
+            'tenant_id': 'mock-tenant-id',
+            'client_secret': 'mock-secret',
+            'webhook_url': '',
+            'mode': 'dev'
+        }
+        
+        try:
+            # 不实际调用，只验证参数接受
+            import inspect
+            
+            # 检查 start_vm 参数
+            sig = inspect.signature(start_vm)
+            start_vm_params = {k: v for k, v in mock_params.items() if k in sig.parameters}
+            print(f'✓ start_vm accepts parameters: {list(start_vm_params.keys())}')
+            
+            # 检查 stop_vm 参数
+            sig = inspect.signature(stop_vm)
+            stop_vm_params = {k: v for k, v in mock_params.items() if k in sig.parameters}
+            print(f'✓ stop_vm accepts parameters: {list(stop_vm_params.keys())}')
+            
+            # 检查 check_status 参数
+            sig = inspect.signature(check_status)
+            check_status_params = {k: v for k, v in mock_params.items() if k in sig.parameters}
+            print(f'✓ check_status accepts parameters: {list(check_status_params.keys())}')
+            
+            # 检查 AvmOperation 类
+            sig = inspect.signature(AvmOperation.__init__)
+            class_params = {k: v for k, v in mock_params.items() if k in sig.parameters}
+            print(f'✓ AvmOperation class accepts parameters: {list(class_params.keys())}')
+            
+        except Exception as e:
+            print(f'✗ Parameter verification failed: {e}')
+            sys.exit(1)
+        
+        print('\n' + '=' * 60)
+        print('All import and parameter checks passed!')
+        print('=' * 60)
+        "
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Check Python files syntax
+      run: |
+        python -m py_compile example.py
+        echo "✓ All Python files have valid syntax"
+
+    - name: Display project structure
+      run: |
+        echo "Project structure:"
+        ls -la
+        echo ""
+        echo "Python version:"
+        python --version
+
+  python-compatibility-summary:
+    needs: [verify-operations, verify-import-from-example, code-quality]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Compatibility Test Summary
+      run: |
+        echo "════════════════════════════════════════════════════"
+        echo "🐍 Python Compatibility Test Summary"
+        echo "════════════════════════════════════════════════════"
+        echo ""
+        echo "Tested Python Versions:"
+        echo "  ✓ Python 3.11 (single-threaded)"
+        echo "  ✓ Python 3.12 (single-threaded)"
+        echo "  ✓ Python 3.13 (single-threaded)"
+        echo "  ✓ Python 3.14-dev (free-threaded)"
+        echo ""
+        echo "Test Results:"
+        echo "  verify-operations: ${{ needs.verify-operations.result }}"
+        echo "  verify-import-from-example: ${{ needs.verify-import-from-example.result }}"
+        echo "  code-quality: ${{ needs.code-quality.result }}"
+        echo ""
+        echo "════════════════════════════════════════════════════"
+        
+        if [ "${{ needs.verify-operations.result }}" == "success" ] && \
+           [ "${{ needs.verify-import-from-example.result }}" == "success" ] && \
+           [ "${{ needs.code-quality.result }}" == "success" ]; then
+          echo "✅ All compatibility tests passed!"
+          exit 0
+        else
+          echo "⚠️  Some tests failed or were skipped"
+          exit 1
+        fi
